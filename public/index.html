@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Прокси-сервис для Notion</title>
+  </head>
+  <body>
+    <h1>Главная страница - Прокси для Notion API</h1>
+    <p>Здесь отображаются все перенаправления:</p>
+    <ul id="redirects-list">
+      <!-- Список перенаправлений будет загружен сюда -->
+    </ul>
+
+    <script>
+      // Функция для обновления списка перенаправлений
+      const updateRedirects = () => {
+        fetch("/.netlify/functions/redirects") // Обращаемся к эндпоинту для получения перенаправлений
+          .then((response) => response.json())
+          .then((data) => {
+            const listElement = document.getElementById("redirects-list");
+            listElement.innerHTML = ""; // Очищаем список перед обновлением
+
+            // Проверяем, есть ли данные о перенаправлениях
+            if (data && data.redirects && Array.isArray(data.redirects)) {
+              data.redirects.forEach((redirect) => {
+                const listItem = document.createElement("li");
+                listItem.textContent = `Путь: ${redirect.path}, Статус: ${redirect.status}`;
+                listElement.appendChild(listItem);
+              });
+            } else {
+              listElement.innerHTML = "<li>Нет перенаправлений.</li>";
+            }
+          })
+          .catch((error) => {
+            console.error("Ошибка при загрузке перенаправлений:", error);
+          });
+      };
+
+      // Обновляем список перенаправлений при загрузке страницы
+      updateRedirects();
+
+      // Обновляем список каждые 5 секунд
+      setInterval(updateRedirects, 5000);
+    </script>
+  </body>
+</html>
