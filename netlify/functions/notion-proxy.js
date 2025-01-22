@@ -1,16 +1,29 @@
-require("dotenv").config(); // Подключение .env
-const fetch = require("node-fetch");
+import dotenv from "dotenv";
+import fetch from "node-fetch";
 
-exports.handler = async (event) => {
+dotenv.config(); // Loading .env configuration
+
+let redirects = []; // Array to store redirect information
+
+export async function handler(event, context) {
   const NOTION_API_URL = "https://api.notion.com/v1/pages";
   const NOTION_API_KEY = process.env.NOTION_API_KEY;
 
+  // Logging incoming requests
+  console.log("Incoming request:", event.body);
+
   try {
+    // Parsing the request body
     const body = JSON.parse(event.body);
 
-    // Логируем данные, которые пришли в запросе
-    console.log("Полученные данные:", body);
+    // Logging the redirect information
+    const redirectInfo = {
+      path: "/api/notion", // Static path for example
+      status: "200 OK", // Redirect status
+    };
+    redirects.push(redirectInfo); // Storing the redirect info in the array
 
+    // Sending a request to the Notion API
     const response = await fetch(NOTION_API_URL, {
       method: "POST",
       headers: {
@@ -23,20 +36,34 @@ exports.handler = async (event) => {
 
     const data = await response.json();
 
-    // Логируем ответ от Notion API
-    console.log("Ответ от Notion API:", data);
+    // Handling response from the Notion API
+    if (!response.ok) {
+      console.error("Error from Notion API:", data);
+      return {
+        statusCode: response.status,
+        body: JSON.stringify(data),
+      };
+    }
+
+    // Logging successful response
+    console.log("Response from Notion API:", data);
 
     return {
       statusCode: response.status,
       body: JSON.stringify(data),
     };
   } catch (error) {
-    // Логируем ошибку
-    console.error("Ошибка при отправке запроса:", error.message);
+    // Logging error
+    console.error("Error sending request:", error.message);
 
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: "Ошибка: " + error.message }),
+      body: JSON.stringify({ message: "Error: " + error.message }),
     };
   }
-};
+}
+
+// Function to get the list of redirects
+export function getRedirects() {
+  return redirects;
+}
