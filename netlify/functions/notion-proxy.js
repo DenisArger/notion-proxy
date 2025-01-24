@@ -1,17 +1,20 @@
-import dotenv from "dotenv";
 import fetch from "node-fetch";
 
-dotenv.config(); // Loading .env configuration
-
-let redirects = []; // Array to store redirect information
+let redirects = []; // Array for storing logs
 
 export async function handler(event, context) {
   const NOTION_API_URL = "https://api.notion.com/v1/pages";
+  const notionApiKey = event.headers["authorization"]?.replace("Bearer ", "");
 
-  const notionApiKey = event.headers["Authorization"]?.replace("Bearer ", "");
+  // Logging incoming request and headers
+  console.log("Request received:");
+  console.log("Path:", event.path);
+  console.log("Method:", event.httpMethod);
+  console.log("Headers:", event.headers);
 
+  // Check for API key
   if (!notionApiKey) {
-    console.error("Notion API Key is missing in request headers.");
+    console.log("API key is missing");
     return {
       statusCode: 400,
       body: JSON.stringify({
@@ -20,17 +23,22 @@ export async function handler(event, context) {
     };
   }
 
-  console.log("Incoming request:", event.body);
+  // Log request information
+  const logEntry = {
+    path: event.path,
+    method: event.httpMethod,
+    timestamp: new Date().toISOString(),
+    status: "Request received",
+  };
+  redirects.push(logEntry); // Add log entry
+  console.log("Request log:", logEntry);
 
   try {
-    const body = JSON.parse(event.body);
+    const body = JSON.parse(event.body); // Parse request body
+    console.log("Request body:", body);
 
-    const redirectInfo = {
-      path: event.path, // Dynamic path from the event
-      status: "302 Found", // Changed to 302 for redirection
-    };
-    redirects.push(redirectInfo); // Storing the redirect info in the array
-
+    // Send request to Notion API
+    console.log("Sending request to Notion API...");
     const response = await fetch(NOTION_API_URL, {
       method: "POST",
       headers: {
@@ -41,26 +49,29 @@ export async function handler(event, context) {
       body: JSON.stringify(body),
     });
 
+    console.log("Response from Notion API received:", response.status);
+
     const data = await response.json();
+    console.log("Response from Notion API:", data);
 
     if (!response.ok) {
-      console.error("Error from Notion API:", data);
+      logEntry.status = `Error: ${response.status}`;
+      console.log("Error in request:", data);
       return {
         statusCode: response.status,
         body: JSON.stringify(data),
       };
     }
 
-    console.log("Response from Notion API:", data);
-
+    logEntry.status = `Success: ${response.status}`;
+    console.log("Request successful:", data);
     return {
       statusCode: response.status,
       body: JSON.stringify(data),
     };
   } catch (error) {
-    // Logging error
-    console.error("Error sending request:", error.message);
-
+    logEntry.status = `Error: ${error.message}`;
+    console.log("Error during request execution:", error.message);
     return {
       statusCode: 500,
       body: JSON.stringify({ message: "Error: " + error.message }),
