@@ -7,27 +7,34 @@ let redirects = []; // Array to store redirect information
 
 export async function handler(event, context) {
   const NOTION_API_URL = "https://api.notion.com/v1/pages";
-  const NOTION_API_KEY = process.env.NOTION_API_KEY;
 
-  // Logging incoming requests
+  const notionApiKey = event.headers["Authorization"]?.replace("Bearer ", "");
+
+  if (!notionApiKey) {
+    console.error("Notion API Key is missing in request headers.");
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        message: "Notion API Key is missing in request headers",
+      }),
+    };
+  }
+
   console.log("Incoming request:", event.body);
 
   try {
-    // Parsing the request body
     const body = JSON.parse(event.body);
 
-    // Logging the redirect information
     const redirectInfo = {
-      path: "/api/notion", // Static path for example
-      status: "200 OK", // Redirect status
+      path: event.path, // Dynamic path from the event
+      status: "302 Found", // Changed to 302 for redirection
     };
     redirects.push(redirectInfo); // Storing the redirect info in the array
 
-    // Sending a request to the Notion API
     const response = await fetch(NOTION_API_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${NOTION_API_KEY}`,
+        Authorization: `Bearer ${notionApiKey}`,
         "Content-Type": "application/json",
         "Notion-Version": "2022-06-28",
       },
@@ -36,7 +43,6 @@ export async function handler(event, context) {
 
     const data = await response.json();
 
-    // Handling response from the Notion API
     if (!response.ok) {
       console.error("Error from Notion API:", data);
       return {
@@ -45,7 +51,6 @@ export async function handler(event, context) {
       };
     }
 
-    // Logging successful response
     console.log("Response from Notion API:", data);
 
     return {
