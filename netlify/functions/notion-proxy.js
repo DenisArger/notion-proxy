@@ -3,7 +3,6 @@ import fetch from "node-fetch";
 let redirects = []; // Array for storing logs
 
 export async function handler(event, context) {
-  const NOTION_API_URL = "https://api.notion.com/v1/pages";
   const notionApiKey = event.headers["authorization"]?.replace("Bearer ", "");
 
   // Logging incoming request and headers
@@ -37,16 +36,29 @@ export async function handler(event, context) {
     const body = JSON.parse(event.body); // Parse request body
     console.log("Request body:", body);
 
-    // Send request to Notion API
-    console.log("Sending request to Notion API...");
-    const response = await fetch(NOTION_API_URL, {
-      method: "POST",
+    // Check whether the `endpoint` has been passed, otherwise the Notion API will not work
+    if (!body.endpoint) {
+      console.log("Error: `endpoint` is missing in request body");
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          message: "`endpoint` is missing in request body",
+        }),
+      };
+    }
+
+    // Forming the correct URL for the request in the Notion API
+    const notionApiUrl = `https://api.notion.com${body.endpoint}`;
+    console.log("Sending request to Notion API:", notionApiUrl);
+
+    const response = await fetch(notionApiUrl, {
+      method: body.method || "POST",
       headers: {
         Authorization: `Bearer ${notionApiKey}`,
         "Content-Type": "application/json",
         "Notion-Version": "2022-06-28",
       },
-      body: JSON.stringify(body),
+      body: body.body ? JSON.stringify(body.body) : undefined,
     });
 
     console.log("Response from Notion API received:", response.status);
