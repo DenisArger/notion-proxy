@@ -4,12 +4,13 @@ let redirects = []; // Array for storing logs
 
 export async function handler(event, context) {
   const notionApiKey = event.headers["authorization"]?.replace("Bearer ", "");
+  const hasAuthHeader = Boolean(event.headers["authorization"]);
 
-  // Logging incoming request and headers
+  // Log only safe metadata to avoid leaking tokens in logs.
   console.log("Request received:");
   console.log("Path:", event.path);
   console.log("Method:", event.httpMethod);
-  console.log("Headers:", event.headers);
+  console.log("Authorization header present:", hasAuthHeader);
 
   // Check for API key
   if (!notionApiKey) {
@@ -34,7 +35,7 @@ export async function handler(event, context) {
 
   try {
     const body = JSON.parse(event.body); // Parse request body
-    console.log("Request body:", body);
+    console.log("Request body fields:", Object.keys(body || {}));
 
     // Check whether the `endpoint` has been passed, otherwise the Notion API will not work
     if (!body.endpoint) {

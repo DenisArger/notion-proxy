@@ -7,8 +7,8 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "description": "",
+  "license": "MIT",
+  "description": "Serverless proxy for Notion API deployed on Netlify Functions",
   "type": "module",
   "dependencies": {
     "dotenv": "^16.4.7",
