@@ -1,5 +1,7 @@
 # notion-proxy
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
+
 Serverless proxy for Notion API on Netlify Functions.
 
 ## What it does
